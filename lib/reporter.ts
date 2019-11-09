@@ -37,6 +37,10 @@ class ReportPortalReporter extends Reporter {
     sendToReporter(EVENTS.RP_TEST_FILE, {test, level, name, content, type});
   }
 
+  public static testRetry(test: any) {
+    sendToReporter(EVENTS.RP_TEST_RETRY, {test});
+  }
+
   private static reporterName = "reportportal";
   private launchId: string;
   private client: ReportPortalClient;
@@ -91,6 +95,7 @@ class ReportPortalReporter extends Reporter {
     }
     const suite = this.storage.getCurrentSuite();
     const testStartObj = new StartTestItem(test.title, type);
+    testStartObj.retry = true;
     testStartObj.codeRef = this.specFile;
     if (this.options.parseTagsFromTestTitle) {
       testStartObj.addTags();
@@ -241,6 +246,22 @@ class ReportPortalReporter extends Reporter {
     }
   }
 
+  private handleRetry(event: any) {
+    const testItem = this.storage.getCurrentTest();
+    if (testItem === null) {
+      return;
+    }
+    const err = {
+      stack: event.test.error,
+    };
+    const test = {
+      error: err,
+      title: testItem.wdioEntity.title,
+      uid: testItem.wdioEntity.uid,
+    };
+    this.testFinished(test, STATUS.FAILED);
+  }
+
   private sendLog(event: any) {
     const testItem = this.storage.getCurrentTest();
     if (testItem === null) {
@@ -323,6 +344,8 @@ class ReportPortalReporter extends Reporter {
     process.on(EVENTS.RP_TEST_LOG, this.sendLogToTest.bind(this));
     // @ts-ignore
     process.on(EVENTS.RP_TEST_FILE, this.sendFileToTest.bind(this));
+    // @ts-ignore
+    process.on(EVENTS.RP_TEST_RETRY, this.handleRetry.bind(this));
   }
 
   private now() {
