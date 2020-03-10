@@ -103,10 +103,11 @@ class ReportPortalReporter extends Reporter {
     suiteStartObj.description = this.sanitizedCapabilities;
 
     // add capabilities to tags
-    if (this.options.attachCapabilities && Array.isArray(this.options.capabilitiesList)) {
+    const capabilitiesList = this.options.capabilitiesList;
+    if (this.options.attachCapabilities && Array.isArray(capabilitiesList)) {
       for (const [key, value] of Object.entries(this.capabilities)) {
-        if (this.options.capabilitiesList.includes(key)) {
-          suiteStartObj.attributes.push({key, value})
+        if (capabilitiesList.includes(key) && value) {
+          suiteStartObj.attributes.push({key, value: JSON.stringify(value)});
         }
       }
     }
