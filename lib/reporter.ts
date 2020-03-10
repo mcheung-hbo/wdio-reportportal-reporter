@@ -49,6 +49,7 @@ class ReportPortalReporter extends Reporter {
   private readonly options: ReporterOptions;
   private isMultiremote: boolean;
   private sanitizedCapabilities: string;
+  private capabilities: object;
   private rpPromisesCompleted = false;
   private specFile: string;
   private featureStatus: STATUS;
@@ -94,8 +95,22 @@ class ReportPortalReporter extends Reporter {
     }
     if (this.options.parseTagsFromTestTitle) {
       suiteStartObj.addTags();
+      // remove tags from title
+      if (this.options.removeTagsFromTestTitle) {
+        suiteStartObj.name = suiteStartObj.name.replace(/@(.+): /, '');
+      }
     }
     suiteStartObj.description = this.sanitizedCapabilities;
+
+    // add capabilities to tags
+    if (this.options.attachCapabilities && Array.isArray(this.options.capabilitiesList)) {
+      for (const [key, value] of Object.entries(this.capabilities)) {
+        if (this.options.capabilitiesList.includes[key]) {
+          suiteStartObj.attributes.push({key, value})
+        }
+      }
+    }
+    suiteStartObj.attributes.push()
     const {tempId, promise} = this.client.startTestItem(
       suiteStartObj,
       this.tempLaunchId,
@@ -219,6 +234,7 @@ class ReportPortalReporter extends Reporter {
     log.trace(`Runner start`);
     this.isMultiremote = runner.isMultiremote;
     this.sanitizedCapabilities = runner.sanitizedCapabilities;
+    this.capabilities = runner.capabilities;
     this.client = client || new ReportPortalClient(this.options.reportPortalClientConfig);
     this.launchId = process.env.RP_LAUNCH_ID;
     this.specFile = runner.specs[0];
