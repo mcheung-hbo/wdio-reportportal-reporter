@@ -49,7 +49,7 @@ class ReportPortalReporter extends Reporter {
   private readonly options: ReporterOptions;
   private isMultiremote: boolean;
   private sanitizedCapabilities: string;
-  private capabilities: object;
+  private capabilities: {[key: string]: any};
   private rpPromisesCompleted = false;
   private specFile: string;
   private featureStatus: STATUS;
@@ -105,9 +105,19 @@ class ReportPortalReporter extends Reporter {
     // add capabilities to tags
     const capabilitiesList = this.options.capabilitiesList;
     if (this.options.attachCapabilities && Array.isArray(capabilitiesList)) {
-      for (const [key, value] of Object.entries(this.capabilities)) {
+      for (let [key, value] of Object.entries(this.capabilities)) {
         if (capabilitiesList.includes(key) && value) {
-          suiteStartObj.attributes.push({key, value: JSON.stringify(value)});
+          if (
+            key === "deviceName" &&
+            this.capabilities.platformName === "Android" &&
+            this.capabilities["browserstack.appiumVersion"]
+          ) {
+            value = this.capabilities.device;
+          }
+          suiteStartObj.attributes.push({
+            key,
+            value: JSON.stringify(value),
+          });
         }
       }
     }
