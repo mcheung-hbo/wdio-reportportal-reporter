@@ -1,7 +1,7 @@
 // @ts-ignore
 import logger from "@wdio/logger";
 import validator from "validator";
-import { StartTestItem } from "./entities";
+import {StartTestItem} from "./entities";
 const stringify = require("json-stringify-safe");
 
 const OBJLENGTH = 10;
@@ -17,17 +17,14 @@ export const promiseErrorHandler = (promise: Promise<any>) => {
   });
 };
 
-export const isEmpty = (object: object) =>
-  !object || Object.keys(object).length === 0;
+export const isEmpty = (object: object) => !object || Object.keys(object).length === 0;
 /**
  * Limit the length of an arbitrary variable of any type, suitable for being logged or displayed
  * @param  {Any} val Any variable
  * @return {Any} Limited var of same type
  */
 export const limit = (val: any) => {
-  if (!val) {
-    return val;
-  }
+  if (!val) { return val; }
   // Ensure we're working with a copy
   let value = JSON.parse(stringify(val));
 
@@ -38,9 +35,7 @@ export const limit = (val: any) => {
       }
 
       if (value.length > STRINGLIMIT) {
-        return `${value.substr(0, STRINGTRUNCATE)} ... (${
-          value.length - STRINGTRUNCATE
-        } more bytes)`;
+        return `${value.substr(0, STRINGTRUNCATE)} ... (${value.length - STRINGTRUNCATE} more bytes)`;
       }
 
       return value;
@@ -64,9 +59,7 @@ export const limit = (val: any) => {
         }
       }
       if (removed.length) {
-        value._ = `${keys.length - OBJLENGTH} more keys: ${JSON.stringify(
-          removed
-        )}`;
+        value._ = `${keys.length - OBJLENGTH} more keys: ${JSON.stringify(removed)}`;
       }
       return value;
     }
@@ -78,7 +71,7 @@ export const limit = (val: any) => {
 
 export const addBrowserParam = (browser: string, testItem: StartTestItem) => {
   if (browser) {
-    const param = { key: "browser", value: browser };
+    const param = {key: "browser", value: browser};
     if (Array.isArray(testItem.parameters)) {
       testItem.parameters.push(param);
       return;
@@ -87,17 +80,13 @@ export const addBrowserParam = (browser: string, testItem: StartTestItem) => {
   }
 };
 
-export const addDescription = (
-  description: string,
-  testItem: StartTestItem
-) => {
+export const addDescription = (description: string, testItem: StartTestItem) => {
   if (description) {
     testItem.description = description;
   }
 };
 
-export const parseTags = (text: string): string[] =>
-  ("" + text).match(TAGS_PATTERN) || [];
+export const parseTags = (text: string): string[] => ("" + text).match(TAGS_PATTERN) || [];
 
 export const isScreenshotCommand = (command: any) => {
   const isScrenshotEndpoint = /\/session\/[^/]*\/screenshot/;
