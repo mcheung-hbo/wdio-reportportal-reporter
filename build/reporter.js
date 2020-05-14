@@ -23,7 +23,7 @@ class ReportPortalReporter extends reporter_1.default {
     constructor(options) {
         super(Object.assign({ stdout: true }, options));
         this.storage = new storage_1.Storage();
-        this.rpPromisesCompleted = false;
+        this.rpPromisesCompleted = true;
         this.options = Object.assign(new ReporterOptions_1.default(), options);
         this.registerListeners();
         if (this.options.cucumberNestedSteps) {
@@ -199,6 +199,7 @@ class ReportPortalReporter extends reporter_1.default {
     // @ts-ignore
     onRunnerStart(runner, client) {
         log.trace(`Runner start`);
+        this.isSynchronised = false;
         this.isMultiremote = runner.isMultiremote;
         this.sanitizedCapabilities = runner.sanitizedCapabilities;
         this.capabilities = runner.capabilities;

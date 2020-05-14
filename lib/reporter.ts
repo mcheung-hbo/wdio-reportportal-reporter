@@ -50,7 +50,7 @@ class ReportPortalReporter extends Reporter {
   private isMultiremote: boolean;
   private sanitizedCapabilities: string;
   private capabilities: {[key: string]: any};
-  private rpPromisesCompleted = false;
+  private rpPromisesCompleted = true;
   private specFile: string;
   private featureStatus: STATUS;
   private featureName: string;
@@ -243,6 +243,7 @@ class ReportPortalReporter extends Reporter {
   // @ts-ignore
   private onRunnerStart(runner: any, client: ReportPortalClient) {
     log.trace(`Runner start`);
+    this.isSynchronised = false;
     this.isMultiremote = runner.isMultiremote;
     this.sanitizedCapabilities = runner.sanitizedCapabilities;
     this.capabilities = runner.capabilities;
