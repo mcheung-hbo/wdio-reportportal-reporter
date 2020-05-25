@@ -24,6 +24,7 @@ class ReportPortalReporter extends reporter_1.default {
         super(Object.assign({ stdout: true }, options));
         this.storage = new storage_1.Storage();
         this.rpPromisesCompleted = true;
+        this.bsURL = '';
         this.options = Object.assign(new ReporterOptions_1.default(), options);
         this.registerListeners();
         if (this.options.cucumberNestedSteps) {
@@ -72,8 +73,10 @@ class ReportPortalReporter extends reporter_1.default {
                         break;
                 }
             }
-            if (this.options.cucumberNestedSteps && suite.type === constants_1.CUCUMBER_TYPE.SCENARIO) {
-                suiteStartObj.description = yield utils_1.getBrowserstackURL(this.capabilities);
+            if (this.options.useBrowserStack && this.options.cucumberNestedSteps && suite.type === constants_1.CUCUMBER_TYPE.SCENARIO) {
+                const url = yield utils_1.getBrowserstackURL(this.capabilities);
+                suiteStartObj.description = url;
+                this.bsURL = url;
             }
             const suiteItem = this.storage.getCurrentSuite();
             let parentId = null;
@@ -194,6 +197,12 @@ class ReportPortalReporter extends reporter_1.default {
                     level: constants_1.LEVEL.ERROR,
                     message,
                 });
+                if (this.options.useBrowserStack) {
+                    this.client.sendLog(suiteItem.id, {
+                        level: constants_1.LEVEL.ERROR,
+                        message: this.bsURL,
+                    });
+                }
             }
         }
         const { promise } = this.client.finishTestItem(testItem.id, finishTestObj);

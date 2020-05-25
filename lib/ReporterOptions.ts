@@ -23,6 +23,6 @@ export default class ReporterOptions {
   public reportPortalClientConfig = {mode: MODE.DEFAULT, attributes: [Attribute], description: ""};
   public removeTagsFromTestTitle = false;
   public attachCapabilities = false;
-  public capabilitiesList = []
+  public capabilitiesList = [];
   public useBrowserStack = false;
 }

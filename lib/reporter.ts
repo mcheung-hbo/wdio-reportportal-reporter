@@ -54,6 +54,7 @@ class ReportPortalReporter extends Reporter {
   private specFile: string;
   private featureStatus: STATUS;
   private featureName: string;
+  private bsURL = '';
 
   constructor(options: any) {
     super(Object.assign({stdout: true}, options));
@@ -89,8 +90,10 @@ class ReportPortalReporter extends Reporter {
     }
 
 
-    if (this.options.cucumberNestedSteps && suite.type === CUCUMBER_TYPE.SCENARIO) {
-      suiteStartObj.description = await getBrowserstackURL(this.capabilities);
+    if (this.options.useBrowserStack && this.options.cucumberNestedSteps && suite.type === CUCUMBER_TYPE.SCENARIO) {
+      const url = await getBrowserstackURL(this.capabilities);
+      suiteStartObj.description = url;
+      this.bsURL = url;
     }
 
     const suiteItem = this.storage.getCurrentSuite();
@@ -235,6 +238,12 @@ class ReportPortalReporter extends Reporter {
           level: LEVEL.ERROR,
           message,
         });
+        if (this.options.useBrowserStack) {
+          this.client.sendLog(suiteItem.id, {
+            level: LEVEL.ERROR,
+            message: this.bsURL,
+          })
+        }
       }
     }
 
