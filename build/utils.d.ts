@@ -12,3 +12,6 @@ export declare const addDescription: (description: string, testItem: StartTestIt
 export declare const parseTags: (text: string) => string[];
 export declare const isScreenshotCommand: (command: any) => boolean;
 export declare const sendToReporter: (event: any, msg?: {}) => void;
+export declare const getBrowserstackURL: (capabilities: {
+    [key: string]: any;
+}) => Promise<any>;

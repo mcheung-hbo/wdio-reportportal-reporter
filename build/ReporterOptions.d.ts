@@ -22,4 +22,5 @@ export default class ReporterOptions {
     removeTagsFromTestTitle: boolean;
     attachCapabilities: boolean;
     capabilitiesList: any[];
+    useBrowserStack: boolean;
 }

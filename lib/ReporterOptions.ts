@@ -24,4 +24,5 @@ export default class ReporterOptions {
   public removeTagsFromTestTitle = false;
   public attachCapabilities = false;
   public capabilitiesList = []
+  public useBrowserStack = false;
 }

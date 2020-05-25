@@ -1,9 +1,19 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // @ts-ignore
 const logger_1 = require("@wdio/logger");
 const validator_1 = require("validator");
 const stringify = require("json-stringify-safe");
+const got_1 = require("got");
 const OBJLENGTH = 10;
 const ARRLENGTH = 10;
 const STRINGLIMIT = 1000;
@@ -90,3 +100,19 @@ exports.sendToReporter = (event, msg = {}) => {
     // @ts-ignore
     process.emit(event, msg);
 };
+exports.getBrowserstackURL = (capabilities) => __awaiter(void 0, void 0, void 0, function* () {
+    const automationType = capabilities.app ? "app-automate" : "automate";
+    try {
+        const json = yield got_1.default
+            .get(`https://api-cloud.browserstack.com/${automationType}/sessions/${capabilities.sessionId}.json`, {
+            username: process.env.BROWSERSTACK_USERNAME,
+            password: process.env.BROWSERSTACK_ACCESS_KEY,
+        })
+            .json();
+        return json.automation_session.browser_url;
+    }
+    catch (e) {
+        log.error(e);
+        return "";
+    }
+});

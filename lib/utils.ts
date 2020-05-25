@@ -3,6 +3,7 @@ import logger from "@wdio/logger";
 import validator from "validator";
 import {StartTestItem} from "./entities";
 const stringify = require("json-stringify-safe");
+import got from "got";
 
 const OBJLENGTH = 10;
 const ARRLENGTH = 10;
@@ -96,4 +97,27 @@ export const isScreenshotCommand = (command: any) => {
 export const sendToReporter = (event: any, msg = {}) => {
   // @ts-ignore
   process.emit(event, msg);
+};
+
+export const getBrowserstackURL = async (capabilities: {
+  [key: string]: any;
+}) => {
+  const automationType = capabilities.app ? "app-automate" : "automate";
+  try {
+    const json: {
+      [key: string]: any;
+    } = await got
+      .get(
+        `https://api-cloud.browserstack.com/${automationType}/sessions/${capabilities.sessionId}.json`,
+        {
+          username: process.env.BROWSERSTACK_USERNAME,
+          password: process.env.BROWSERSTACK_ACCESS_KEY,
+        }
+      )
+      .json();
+    return json.automation_session.browser_url;
+  } catch (e) {
+    log.error(e);
+    return "";
+  }
 };

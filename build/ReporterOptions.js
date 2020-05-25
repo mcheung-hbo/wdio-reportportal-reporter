@@ -23,6 +23,7 @@ class ReporterOptions {
         this.removeTagsFromTestTitle = false;
         this.attachCapabilities = false;
         this.capabilitiesList = [];
+        this.useBrowserStack = false;
     }
 }
 exports.default = ReporterOptions;

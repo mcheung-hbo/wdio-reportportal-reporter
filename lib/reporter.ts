@@ -7,7 +7,7 @@ import {CUCUMBER_STATUS, CUCUMBER_TYPE, EVENTS, LEVEL, STATUS, TYPE} from "./con
 import {EndTestItem, Issue, StartTestItem, StorageEntity} from "./entities";
 import ReporterOptions from "./ReporterOptions";
 import {Storage} from "./storage";
-import {addBrowserParam, isEmpty, isScreenshotCommand, limit, promiseErrorHandler, sendToReporter} from "./utils";
+import {addBrowserParam, isEmpty, isScreenshotCommand, limit, promiseErrorHandler, sendToReporter, getBrowserstackURL} from "./utils";
 
 const log = logger("wdio-reportportal-reporter");
 
@@ -65,7 +65,7 @@ class ReportPortalReporter extends Reporter {
     }
   }
 
-  private onSuiteStart(suite: any) {
+  private async onSuiteStart(suite: any) {
     log.trace(`Start suite ${suite.title} ${suite.uid}`);
 
     const suiteStartObj = this.options.cucumberNestedSteps ?
@@ -88,6 +88,11 @@ class ReportPortalReporter extends Reporter {
       }
     }
 
+
+    if (this.options.cucumberNestedSteps && suite.type === CUCUMBER_TYPE.SCENARIO) {
+      suiteStartObj.description = await getBrowserstackURL(this.capabilities);
+    }
+
     const suiteItem = this.storage.getCurrentSuite();
     let parentId = null;
     if (suiteItem !== null) {
@@ -100,7 +105,6 @@ class ReportPortalReporter extends Reporter {
         suiteStartObj.name = suiteStartObj.name.replace(/@(.+): /, '');
       }
     }
-    suiteStartObj.description = this.sanitizedCapabilities;
 
     // add capabilities to tags
     const capabilitiesList = this.options.capabilitiesList;
@@ -110,7 +114,7 @@ class ReportPortalReporter extends Reporter {
           if (
             key === "deviceName" &&
             this.capabilities.platformName === "Android" &&
-            this.capabilities["browserstack.appiumVersion"]
+            this.options.useBrowserStack
           ) {
             value = this.capabilities.device;
           }

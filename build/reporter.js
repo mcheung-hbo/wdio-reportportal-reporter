@@ -52,59 +52,63 @@ class ReportPortalReporter extends reporter_1.default {
         utils_1.sendToReporter(constants_1.EVENTS.RP_TEST_RETRY, { test });
     }
     onSuiteStart(suite) {
-        log.trace(`Start suite ${suite.title} ${suite.uid}`);
-        const suiteStartObj = this.options.cucumberNestedSteps ?
-            new entities_1.StartTestItem(suite.title, suite.type === constants_1.CUCUMBER_TYPE.FEATURE ? constants_1.TYPE.TEST : constants_1.TYPE.STEP) :
-            new entities_1.StartTestItem(suite.title, constants_1.TYPE.SUITE);
-        if (this.options.cucumberNestedSteps && this.options.autoAttachCucumberFeatureToScenario) {
-            switch (suite.type) {
-                case constants_1.CUCUMBER_TYPE.FEATURE:
-                    this.featureName = suite.title;
-                    break;
-                case constants_1.CUCUMBER_TYPE.SCENARIO:
-                    suiteStartObj.attributes = [
-                        {
-                            key: constants_1.CUCUMBER_TYPE.FEATURE,
-                            value: this.featureName,
-                        },
-                    ];
-                    break;
-            }
-        }
-        const suiteItem = this.storage.getCurrentSuite();
-        let parentId = null;
-        if (suiteItem !== null) {
-            parentId = suiteItem.id;
-        }
-        if (this.options.parseTagsFromTestTitle) {
-            suiteStartObj.addTags();
-            // remove tags from title
-            if (this.options.removeTagsFromTestTitle) {
-                suiteStartObj.name = suiteStartObj.name.replace(/@(.+): /, '');
-            }
-        }
-        suiteStartObj.description = this.sanitizedCapabilities;
-        // add capabilities to tags
-        const capabilitiesList = this.options.capabilitiesList;
-        if (this.options.attachCapabilities && Array.isArray(capabilitiesList)) {
-            for (let [key, value] of Object.entries(this.capabilities)) {
-                if (capabilitiesList.includes(key) && value) {
-                    if (key === "deviceName" &&
-                        this.capabilities.platformName === "Android" &&
-                        this.capabilities["browserstack.appiumVersion"]) {
-                        value = this.capabilities.device;
-                    }
-                    suiteStartObj.attributes.push({
-                        key,
-                        value: JSON.stringify(value),
-                    });
+        return __awaiter(this, void 0, void 0, function* () {
+            log.trace(`Start suite ${suite.title} ${suite.uid}`);
+            const suiteStartObj = this.options.cucumberNestedSteps ?
+                new entities_1.StartTestItem(suite.title, suite.type === constants_1.CUCUMBER_TYPE.FEATURE ? constants_1.TYPE.TEST : constants_1.TYPE.STEP) :
+                new entities_1.StartTestItem(suite.title, constants_1.TYPE.SUITE);
+            if (this.options.cucumberNestedSteps && this.options.autoAttachCucumberFeatureToScenario) {
+                switch (suite.type) {
+                    case constants_1.CUCUMBER_TYPE.FEATURE:
+                        this.featureName = suite.title;
+                        break;
+                    case constants_1.CUCUMBER_TYPE.SCENARIO:
+                        suiteStartObj.attributes = [
+                            {
+                                key: constants_1.CUCUMBER_TYPE.FEATURE,
+                                value: this.featureName,
+                            },
+                        ];
+                        break;
                 }
             }
-        }
-        suiteStartObj.attributes.push();
-        const { tempId, promise } = this.client.startTestItem(suiteStartObj, this.tempLaunchId, parentId);
-        utils_1.promiseErrorHandler(promise);
-        this.storage.addSuite(new entities_1.StorageEntity(suiteStartObj.type, tempId, promise, suite));
+            if (this.options.cucumberNestedSteps && suite.type === constants_1.CUCUMBER_TYPE.SCENARIO) {
+                suiteStartObj.description = yield utils_1.getBrowserstackURL(this.capabilities);
+            }
+            const suiteItem = this.storage.getCurrentSuite();
+            let parentId = null;
+            if (suiteItem !== null) {
+                parentId = suiteItem.id;
+            }
+            if (this.options.parseTagsFromTestTitle) {
+                suiteStartObj.addTags();
+                // remove tags from title
+                if (this.options.removeTagsFromTestTitle) {
+                    suiteStartObj.name = suiteStartObj.name.replace(/@(.+): /, '');
+                }
+            }
+            // add capabilities to tags
+            const capabilitiesList = this.options.capabilitiesList;
+            if (this.options.attachCapabilities && Array.isArray(capabilitiesList)) {
+                for (let [key, value] of Object.entries(this.capabilities)) {
+                    if (capabilitiesList.includes(key) && value) {
+                        if (key === "deviceName" &&
+                            this.capabilities.platformName === "Android" &&
+                            this.options.useBrowserStack) {
+                            value = this.capabilities.device;
+                        }
+                        suiteStartObj.attributes.push({
+                            key,
+                            value: JSON.stringify(value),
+                        });
+                    }
+                }
+            }
+            suiteStartObj.attributes.push();
+            const { tempId, promise } = this.client.startTestItem(suiteStartObj, this.tempLaunchId, parentId);
+            utils_1.promiseErrorHandler(promise);
+            this.storage.addSuite(new entities_1.StorageEntity(suiteStartObj.type, tempId, promise, suite));
+        });
     }
     onSuiteEnd(suite) {
         log.trace(`End suite ${suite.title} ${suite.uid}`);
