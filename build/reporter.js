@@ -24,7 +24,7 @@ class ReportPortalReporter extends reporter_1.default {
         super(Object.assign({ stdout: true }, options));
         this.storage = new storage_1.Storage();
         this.rpPromisesCompleted = true;
-        this.bsURL = '';
+        this.bsUrlPromise = Promise.resolve('');
         this.options = Object.assign(new ReporterOptions_1.default(), options);
         this.registerListeners();
         if (this.options.cucumberNestedSteps) {
@@ -53,65 +53,62 @@ class ReportPortalReporter extends reporter_1.default {
         utils_1.sendToReporter(constants_1.EVENTS.RP_TEST_RETRY, { test });
     }
     onSuiteStart(suite) {
-        return __awaiter(this, void 0, void 0, function* () {
-            log.trace(`Start suite ${suite.title} ${suite.uid}`);
-            const suiteStartObj = this.options.cucumberNestedSteps ?
-                new entities_1.StartTestItem(suite.title, suite.type === constants_1.CUCUMBER_TYPE.FEATURE ? constants_1.TYPE.TEST : constants_1.TYPE.STEP) :
-                new entities_1.StartTestItem(suite.title, constants_1.TYPE.SUITE);
-            if (this.options.cucumberNestedSteps && this.options.autoAttachCucumberFeatureToScenario) {
-                switch (suite.type) {
-                    case constants_1.CUCUMBER_TYPE.FEATURE:
-                        this.featureName = suite.title;
-                        break;
-                    case constants_1.CUCUMBER_TYPE.SCENARIO:
-                        suiteStartObj.attributes = [
-                            {
-                                key: constants_1.CUCUMBER_TYPE.FEATURE,
-                                value: this.featureName,
-                            },
-                        ];
-                        break;
-                }
+        log.trace(`Start suite ${suite.title} ${suite.uid}`);
+        const suiteStartObj = this.options.cucumberNestedSteps ?
+            new entities_1.StartTestItem(suite.title, suite.type === constants_1.CUCUMBER_TYPE.FEATURE ? constants_1.TYPE.TEST : constants_1.TYPE.STEP) :
+            new entities_1.StartTestItem(suite.title, constants_1.TYPE.SUITE);
+        if (this.options.cucumberNestedSteps && this.options.autoAttachCucumberFeatureToScenario) {
+            switch (suite.type) {
+                case constants_1.CUCUMBER_TYPE.FEATURE:
+                    this.featureName = suite.title;
+                    break;
+                case constants_1.CUCUMBER_TYPE.SCENARIO:
+                    suiteStartObj.attributes = [
+                        {
+                            key: constants_1.CUCUMBER_TYPE.FEATURE,
+                            value: this.featureName,
+                        },
+                    ];
+                    break;
             }
-            if (this.options.useBrowserStack && this.options.cucumberNestedSteps && suite.type === constants_1.CUCUMBER_TYPE.SCENARIO) {
-                const url = yield utils_1.getBrowserstackURL(this.capabilities);
-                suiteStartObj.description = url;
-                this.bsURL = url;
+        }
+        if (this.options.useBrowserStack && this.options.cucumberNestedSteps && suite.type === constants_1.CUCUMBER_TYPE.SCENARIO) {
+            this.bsUrlPromise = utils_1.getBrowserstackURL(this.capabilities);
+        }
+        const suiteItem = this.storage.getCurrentSuite();
+        let parentId = null;
+        if (suiteItem !== null) {
+            parentId = suiteItem.id;
+        }
+        if (this.options.parseTagsFromTestTitle) {
+            suiteStartObj.addTags();
+            // remove tags from title
+            if (this.options.removeTagsFromTestTitle) {
+                suiteStartObj.name = suiteStartObj.name.replace(/@(.+): /, '');
             }
-            const suiteItem = this.storage.getCurrentSuite();
-            let parentId = null;
-            if (suiteItem !== null) {
-                parentId = suiteItem.id;
-            }
-            if (this.options.parseTagsFromTestTitle) {
-                suiteStartObj.addTags();
-                // remove tags from title
-                if (this.options.removeTagsFromTestTitle) {
-                    suiteStartObj.name = suiteStartObj.name.replace(/@(.+): /, '');
-                }
-            }
-            // add capabilities to tags
-            const capabilitiesList = this.options.capabilitiesList;
-            if (this.options.attachCapabilities && Array.isArray(capabilitiesList)) {
-                for (let [key, value] of Object.entries(this.capabilities)) {
-                    if (capabilitiesList.includes(key) && value) {
-                        if (key === "deviceName" &&
-                            this.capabilities.platformName === "Android" &&
-                            this.options.useBrowserStack) {
-                            value = this.capabilities.device;
-                        }
-                        suiteStartObj.attributes.push({
-                            key,
-                            value: JSON.stringify(value),
-                        });
+        }
+        suiteStartObj.description = this.sanitizedCapabilities;
+        // add capabilities to tags
+        const capabilitiesList = this.options.capabilitiesList;
+        if (this.options.attachCapabilities && Array.isArray(capabilitiesList)) {
+            for (let [key, value] of Object.entries(this.capabilities)) {
+                if (capabilitiesList.includes(key) && value) {
+                    if (key === "deviceName" &&
+                        this.capabilities.platformName === "Android" &&
+                        this.options.useBrowserStack) {
+                        value = this.capabilities.device;
                     }
+                    suiteStartObj.attributes.push({
+                        key,
+                        value: JSON.stringify(value),
+                    });
                 }
             }
-            suiteStartObj.attributes.push();
-            const { tempId, promise } = this.client.startTestItem(suiteStartObj, this.tempLaunchId, parentId);
-            utils_1.promiseErrorHandler(promise);
-            this.storage.addSuite(new entities_1.StorageEntity(suiteStartObj.type, tempId, promise, suite));
-        });
+        }
+        suiteStartObj.attributes.push();
+        const { tempId, promise } = this.client.startTestItem(suiteStartObj, this.tempLaunchId, parentId);
+        utils_1.promiseErrorHandler(promise);
+        this.storage.addSuite(new entities_1.StorageEntity(suiteStartObj.type, tempId, promise, suite));
     }
     onSuiteEnd(suite) {
         log.trace(`End suite ${suite.title} ${suite.uid}`);
@@ -178,36 +175,38 @@ class ReportPortalReporter extends reporter_1.default {
         this.testFinished(test, constants_1.STATUS.SKIPPED, new entities_1.Issue("NOT_ISSUE"));
     }
     testFinished(test, status, issue) {
-        log.trace(`Finish test ${test.title} ${test.uid}`);
-        const testItem = this.storage.getCurrentTest();
-        if (testItem === null) {
-            return;
-        }
-        const finishTestObj = new entities_1.EndTestItem(status, issue);
-        if (status === constants_1.STATUS.FAILED) {
-            const message = `${test.error.stack} `;
-            finishTestObj.description = `❌ ${message}`;
-            this.client.sendLog(testItem.id, {
-                level: constants_1.LEVEL.ERROR,
-                message,
-            });
-            if (this.options.cucumberNestedSteps) {
-                const suiteItem = this.storage.getCurrentSuite();
-                this.client.sendLog(suiteItem.id, {
+        return __awaiter(this, void 0, void 0, function* () {
+            log.trace(`Finish test ${test.title} ${test.uid}`);
+            const testItem = this.storage.getCurrentTest();
+            if (testItem === null) {
+                return;
+            }
+            const finishTestObj = new entities_1.EndTestItem(status, issue);
+            if (status === constants_1.STATUS.FAILED) {
+                const message = `${test.error.stack} `;
+                finishTestObj.description = `❌ ${message}`;
+                this.client.sendLog(testItem.id, {
                     level: constants_1.LEVEL.ERROR,
                     message,
                 });
-                if (this.options.useBrowserStack) {
+                if (this.options.cucumberNestedSteps) {
+                    const suiteItem = this.storage.getCurrentSuite();
                     this.client.sendLog(suiteItem.id, {
                         level: constants_1.LEVEL.ERROR,
-                        message: this.bsURL,
+                        message,
                     });
+                    if (this.options.useBrowserStack) {
+                        this.client.sendLog(suiteItem.id, {
+                            level: constants_1.LEVEL.ERROR,
+                            message: yield this.bsUrlPromise,
+                        });
+                    }
                 }
             }
-        }
-        const { promise } = this.client.finishTestItem(testItem.id, finishTestObj);
-        utils_1.promiseErrorHandler(promise);
-        this.storage.removeTest(testItem);
+            const { promise } = this.client.finishTestItem(testItem.id, finishTestObj);
+            utils_1.promiseErrorHandler(promise);
+            this.storage.removeTest(testItem);
+        });
     }
     // @ts-ignore
     onRunnerStart(runner, client) {

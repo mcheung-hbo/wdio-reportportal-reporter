@@ -21,7 +21,7 @@ declare class ReportPortalReporter extends Reporter {
     private specFile;
     private featureStatus;
     private featureName;
-    private bsURL;
+    private bsUrlPromise;
     constructor(options: any);
     private onSuiteStart;
     private onSuiteEnd;

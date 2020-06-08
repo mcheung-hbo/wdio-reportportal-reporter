@@ -54,7 +54,7 @@ class ReportPortalReporter extends Reporter {
   private specFile: string;
   private featureStatus: STATUS;
   private featureName: string;
-  private bsURL = '';
+  private bsUrlPromise= Promise.resolve('');
 
   constructor(options: any) {
     super(Object.assign({stdout: true}, options));
@@ -66,7 +66,7 @@ class ReportPortalReporter extends Reporter {
     }
   }
 
-  private async onSuiteStart(suite: any) {
+  private onSuiteStart(suite: any) {
     log.trace(`Start suite ${suite.title} ${suite.uid}`);
 
     const suiteStartObj = this.options.cucumberNestedSteps ?
@@ -91,9 +91,7 @@ class ReportPortalReporter extends Reporter {
 
 
     if (this.options.useBrowserStack && this.options.cucumberNestedSteps && suite.type === CUCUMBER_TYPE.SCENARIO) {
-      const url = await getBrowserstackURL(this.capabilities);
-      suiteStartObj.description = url;
-      this.bsURL = url;
+      this.bsUrlPromise = getBrowserstackURL(this.capabilities);
     }
 
     const suiteItem = this.storage.getCurrentSuite();
@@ -108,6 +106,8 @@ class ReportPortalReporter extends Reporter {
         suiteStartObj.name = suiteStartObj.name.replace(/@(.+): /, '');
       }
     }
+
+    suiteStartObj.description = this.sanitizedCapabilities;
 
     // add capabilities to tags
     const capabilitiesList = this.options.capabilitiesList;
@@ -216,7 +216,7 @@ class ReportPortalReporter extends Reporter {
     this.testFinished(test, STATUS.SKIPPED, new Issue("NOT_ISSUE"));
   }
 
-  private testFinished(test: any, status: STATUS, issue ?: Issue) {
+  private async testFinished(test: any, status: STATUS, issue ?: Issue) {
     log.trace(`Finish test ${test.title} ${test.uid}`);
     const testItem = this.storage.getCurrentTest();
     if (testItem === null) {
@@ -241,7 +241,7 @@ class ReportPortalReporter extends Reporter {
         if (this.options.useBrowserStack) {
           this.client.sendLog(suiteItem.id, {
             level: LEVEL.ERROR,
-            message: this.bsURL,
+            message: await this.bsUrlPromise,
           })
         }
       }
