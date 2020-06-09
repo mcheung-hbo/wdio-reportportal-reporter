@@ -16,7 +16,8 @@ class StartTestItem {
     addTags() {
         const tags = utils_1.parseTags(this.name);
         if (tags.length > 0) {
-            const attrs = tags.map((value) => (new ReporterOptions_1.Attribute(undefined, value)));
+            const attrs = tags.map((value) => (new ReporterOptions_1.Attribute("tag", value)));
+            this.attributes.push(new ReporterOptions_1.Attribute("func", tags[0]));
             this.attributes.push(...attrs);
         }
     }
