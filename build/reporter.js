@@ -96,7 +96,7 @@ class ReportPortalReporter extends reporter_1.default {
                     if (key === "deviceName" &&
                         this.capabilities.platformName === "Android" &&
                         this.options.useBrowserStack) {
-                        value = this.capabilities.device;
+                        value = this.capabilities.device || `${this.capabilities.deviceManufacturer} ${this.capabilities.deviceModel}`;
                     }
                     suiteStartObj.attributes.push({
                         key,

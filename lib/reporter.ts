@@ -119,7 +119,7 @@ class ReportPortalReporter extends Reporter {
             this.capabilities.platformName === "Android" &&
             this.options.useBrowserStack
           ) {
-            value = this.capabilities.device;
+            value = this.capabilities.device || `${this.capabilities.deviceManufacturer} ${this.capabilities.deviceModel}`;
           }
           suiteStartObj.attributes.push({
             key,
