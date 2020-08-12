@@ -19,6 +19,7 @@ const ARRLENGTH = 10;
 const STRINGLIMIT = 1000;
 const STRINGTRUNCATE = 200;
 const TAGS_PATTERN = /\B@[a-z0-9_-]+/gi;
+const TC_TITLE_PATTERN = /: (.+$)/;
 const log = logger_1.default("wdio-reportportal-reporter");
 exports.promiseErrorHandler = (promise) => {
     promise.catch((err) => {
@@ -92,6 +93,13 @@ exports.addDescription = (description, testItem) => {
     }
 };
 exports.parseTags = (text) => ("" + text).match(TAGS_PATTERN) || [];
+exports.parseTitle = (text) => {
+    const regex = text.match(TC_TITLE_PATTERN);
+    if (regex && regex.length > 1) {
+        return regex[1];
+    }
+    return undefined;
+};
 exports.isScreenshotCommand = (command) => {
     const isScrenshotEndpoint = /\/session\/[^/]*\/screenshot/;
     return isScrenshotEndpoint.test(command.endpoint);

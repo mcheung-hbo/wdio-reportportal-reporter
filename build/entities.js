@@ -19,6 +19,21 @@ class StartTestItem {
             const attrs = tags.map((value) => (new ReporterOptions_1.Attribute("tag", value)));
             this.attributes.push(new ReporterOptions_1.Attribute("func", tags[0]));
             this.attributes.push(...attrs);
+            // if tags are detected, it's either the name of test feature, like:
+            // @tag1 @tag2 Test for a feature
+            //
+            // or the actual test scenario, like:
+            // @tag3, @tag4: test for a specific scenario
+            //
+            // on these 2 cases, we parse out the test name
+            // and send it over to report portal as attribute so each test feature / scenario
+            // can be uniquely identified via the attribute to create dashboard that
+            // can drill down to individual test case level
+            let testTitle = utils_1.parseTitle(this.name);
+            if (testTitle) {
+                testTitle = testTitle.replace(/ /g, '-');
+                this.attributes.push(new ReporterOptions_1.Attribute("title", testTitle));
+            }
         }
     }
 }

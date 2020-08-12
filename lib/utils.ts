@@ -10,6 +10,8 @@ const ARRLENGTH = 10;
 const STRINGLIMIT = 1000;
 const STRINGTRUNCATE = 200;
 const TAGS_PATTERN = /\B@[a-z0-9_-]+/gi;
+const TC_TITLE_PATTERN = /: (.+$)/;
+
 const log = logger("wdio-reportportal-reporter");
 
 export const promiseErrorHandler = (promise: Promise<any>) => {
@@ -88,6 +90,14 @@ export const addDescription = (description: string, testItem: StartTestItem) => 
 };
 
 export const parseTags = (text: string): string[] => ("" + text).match(TAGS_PATTERN) || [];
+
+export const parseTitle = (text: string): string | undefined => {
+  const regex = text.match(TC_TITLE_PATTERN);
+  if (regex && regex.length > 1) {
+    return regex[1];
+  }
+  return undefined;
+}
 
 export const isScreenshotCommand = (command: any) => {
   const isScrenshotEndpoint = /\/session\/[^/]*\/screenshot/;

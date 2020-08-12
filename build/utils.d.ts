@@ -10,6 +10,7 @@ export declare const limit: (val: any) => any;
 export declare const addBrowserParam: (browser: string, testItem: StartTestItem) => void;
 export declare const addDescription: (description: string, testItem: StartTestItem) => void;
 export declare const parseTags: (text: string) => string[];
+export declare const parseTitle: (text: string) => string;
 export declare const isScreenshotCommand: (command: any) => boolean;
 export declare const sendToReporter: (event: any, msg?: {}) => void;
 export declare const getBrowserstackURL: (capabilities: {
