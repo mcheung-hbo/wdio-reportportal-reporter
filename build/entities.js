@@ -23,16 +23,16 @@ class StartTestItem {
             // @tag1 @tag2 Test for a feature
             //
             // or the actual test scenario, like:
-            // @tag3, @tag4: test for a specific senceario
+            // @tag3, @tag4: test for a specific scenario
             //
             // on these 2 cases, we parse out the test name
-            // and send it over to report portal as attribute so each test feture / scenario
+            // and send it over to report portal as attribute so each test feature / scenario
             // can be uniquely identified via the attribute to create dashboard that
-            // can drilled down to individual test case level
-            const testName = this.name.match(/: (.+$)/);
-            if (testName && testName.length > 1) {
-                const title = testName[1].replace(/ /g, '-');
-                this.attributes.push(new ReporterOptions_1.Attribute("title", title));
+            // can drill down to individual test case level
+            let testTitle = utils_1.parseTitle(this.name);
+            if (testTitle) {
+                testTitle = testTitle.replace(/ /g, '-');
+                this.attributes.push(new ReporterOptions_1.Attribute("title", testTitle));
             }
         }
     }
