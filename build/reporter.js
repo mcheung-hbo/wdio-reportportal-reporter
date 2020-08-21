@@ -73,6 +73,10 @@ class ReportPortalReporter extends reporter_1.default {
             }
         }
         if (this.options.useBrowserStack && this.options.cucumberNestedSteps && suite.type === constants_1.CUCUMBER_TYPE.SCENARIO) {
+            // tells report reportal that the test scenario is retry-able
+            if (this.options.setRetryTrue) {
+                suiteStartObj.retry = true;
+            }
             this.bsUrlPromise = utils_1.getBrowserstackURL(this.capabilities);
         }
         const suiteItem = this.storage.getCurrentSuite();
@@ -223,6 +227,7 @@ class ReportPortalReporter extends reporter_1.default {
             id: this.launchId,
             mode: this.options.reportPortalClientConfig.mode,
             attributes: this.options.reportPortalClientConfig.attributes,
+            rerun: this.options.setRetryTrue,
         };
         const { tempId } = this.client.startLaunch(startLaunchObj);
         this.tempLaunchId = tempId;

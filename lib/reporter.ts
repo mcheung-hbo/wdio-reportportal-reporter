@@ -91,6 +91,10 @@ class ReportPortalReporter extends Reporter {
 
 
     if (this.options.useBrowserStack && this.options.cucumberNestedSteps && suite.type === CUCUMBER_TYPE.SCENARIO) {
+      // tells report reportal that the test scenario is retry-able
+      if (this.options.setRetryTrue) {
+        suiteStartObj.retry = true;
+      }
       this.bsUrlPromise = getBrowserstackURL(this.capabilities);
     }
 
@@ -263,11 +267,13 @@ class ReportPortalReporter extends Reporter {
     this.client = client || new ReportPortalClient(this.options.reportPortalClientConfig);
     this.launchId = process.env.RP_LAUNCH_ID;
     this.specFile = runner.specs[0];
+
     const startLaunchObj = {
       description: this.options.reportPortalClientConfig.description,
       id: this.launchId,
       mode: this.options.reportPortalClientConfig.mode,
       attributes: this.options.reportPortalClientConfig.attributes,
+      rerun: this.options.setRetryTrue, // set rerun for the launch
     };
     const {tempId} = this.client.startLaunch(startLaunchObj);
     this.tempLaunchId = tempId;
