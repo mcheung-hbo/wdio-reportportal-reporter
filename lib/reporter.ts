@@ -5,7 +5,7 @@ import * as path from "path";
 import * as ReportPortalClient from "reportportal-js-client";
 import {CUCUMBER_STATUS, CUCUMBER_TYPE, EVENTS, LEVEL, STATUS, TYPE} from "./constants";
 import {EndTestItem, Issue, StartTestItem, StorageEntity} from "./entities";
-import ReporterOptions from "./ReporterOptions";
+import ReporterOptions, {Attribute} from "./ReporterOptions";
 import {Storage} from "./storage";
 import {addBrowserParam, isEmpty, isScreenshotCommand, limit, promiseErrorHandler, sendToReporter, getBrowserstackURL} from "./utils";
 
@@ -41,6 +41,28 @@ class ReportPortalReporter extends Reporter {
     sendToReporter(EVENTS.RP_TEST_RETRY, {test});
   }
 
+  public static addAttribute(attribute: Attribute) {
+    if (!attribute) {
+      throw new Error("Attribute should be an object")
+    }
+    const clonedAttribute = Object.assign({}, attribute)
+    if (clonedAttribute.value) {
+      clonedAttribute.value = String(clonedAttribute.value);
+      if (clonedAttribute.value.trim().length === 0) {
+        throw Error("Attribute value should not be an empty string")
+      }
+    } else {
+      throw new Error("Invalid attribute: " + JSON.stringify(attribute));
+    }
+    if (clonedAttribute.key) {
+      clonedAttribute.key = String(clonedAttribute.key);
+      if (clonedAttribute.key.trim().length === 0) {
+        throw Error("Attribute key should not be an empty string")
+      }
+    }
+    sendToReporter(EVENTS.RP_TEST_ATTRIBUTES, {...clonedAttribute});
+  }
+
   private static reporterName = "reportportal";
   private launchId: string;
   private client: ReportPortalClient;
@@ -55,6 +77,7 @@ class ReportPortalReporter extends Reporter {
   private featureStatus: STATUS;
   private featureName: string;
   private bsUrlPromise= Promise.resolve('');
+  private currentTestAttributes: Attribute[] = [];
 
   constructor(options: any) {
     super(Object.assign({stdout: true}, options));
@@ -346,6 +369,10 @@ class ReportPortalReporter extends Reporter {
       }
       this.testFinished(hook, STATUS.FAILED);
     }
+  }
+
+  private addAttribute(attribute: Attribute) {
+    this.currentTestAttributes.push({...attribute})
   }
 
   private finishTestManually(event: any) {
